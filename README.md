@@ -2,7 +2,7 @@
 
 **Do**cker **Re**gistry Cleaning - (Do Re Mi because of the musical thing)
 
-Node JS (dockerized) utility for cleaning a docker registry. For both automated and interactive CLI usage.
+Node JS (dockerized) utility for cleaning a docker registry that uses [semver](https://semver.org/) tags. For both automated and interactive CLI usage.
 
 ## Usage
 
