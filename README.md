@@ -16,7 +16,7 @@ This runs the current TypeScript source using the project's local `tsx` dependen
 
 ## Docker
 
-Build the image from this checkout:
+Use the pre-built docker image [https://hub.docker.com/r/jwulf0/doremi](https://hub.docker.com/r/jwulf0/doremi) or build the image from this checkout:
 
 ```sh
 docker build --tag doremi:local .
