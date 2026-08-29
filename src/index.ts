@@ -58,6 +58,14 @@ const loggingOptions = object({
   logFormat: option("-l", "--log-format", choice(["json", "pretty"] as const), {
     description: message`Log output format`,
   }).withDefault("pretty"),
+  logLevel: option(
+    "-v",
+    "--log-level",
+    choice(["fatal", "error", "warn", "info", "debug", "trace", "silent"]),
+    {
+      description: message`Log level`,
+    },
+  ).withDefault("info"),
 })
 
 const parser = merge(
@@ -73,7 +81,7 @@ const config = run(parser, {
   help: "both",
 })
 
-configureLogging(config.logFormat)
+configureLogging(config.logFormat, config.logLevel)
 
 const getAuthBase64 = async () => {
   switch (config.authMode) {

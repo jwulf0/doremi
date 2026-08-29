@@ -1,20 +1,23 @@
-import pino, { type Logger } from "pino"
+import pino, { type LevelWithSilent, type Logger } from "pino"
 
 export type LogFormat = "json" | "pretty"
 
 let rootLogger: Logger = pino({ level: "silent" })
 
-export function configureLogging(format: LogFormat): void {
+export function configureLogging(
+  format: LogFormat,
+  level: LevelWithSilent,
+): void {
   rootLogger =
     format === "pretty"
       ? pino({
-          level: "info",
+          level,
           transport: {
             target: "pino-pretty",
             options: { colorize: process.stdout.isTTY },
           },
         })
-      : pino({ level: "info" })
+      : pino({ level })
 }
 
 export function createLogger(name: string): Logger {

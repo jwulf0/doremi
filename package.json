@@ -1,6 +1,6 @@
 {
   "name": "doremi",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Utility for cleaning a docker registry. For both automated and interactive CLI usage.",
   "scripts": {
     "build": "tsc",
