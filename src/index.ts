@@ -1,6 +1,6 @@
 import { option, constant } from "@optique/core/primitives"
 import { object, or, merge } from "@optique/core/constructs"
-import { string, integer } from "@optique/core/valueparser"
+import { choice, string, integer } from "@optique/core/valueparser"
 import { run } from "@optique/run"
 import { input, password } from "@inquirer/prompts"
 import { readFileSync } from "fs"
@@ -11,55 +11,60 @@ import {
 } from "./docker-registry-client.js"
 import { rsort, valid } from "semver"
 import { message } from "@optique/core/message"
+import { configureLogging, createLogger } from "./logger.js"
+
+const logger = createLogger("doremi")
 
 const registryOptions = object({
   registryUrl: option("-r", "--registry-url", string(), {
-    description: message`URL of the Docker registry`
+    description: message`URL of the Docker registry`,
   }),
 })
 
 const authOptionPrompt = object({
   authMode: constant("prompt" as const),
   promptForAuth: option("-o", "--prompt-for-auth", {
-    description: message`Prompt for Docker registry authentication`
+    description: message`Prompt for Docker registry authentication`,
   }),
 })
 
 const authOptionUserPass = object({
   authMode: constant("userpass" as const),
   username: option("-u", "--username", string(), {
-    description: message`Docker registry username`
+    description: message`Docker registry username`,
   }),
   password: option("-p", "--password", string(), {
-    description: message`Docker registry password`
+    description: message`Docker registry password`,
   }),
 })
 
 const authOptionFile = object({
   authMode: constant("file" as const),
   authFile: option("-a", "--auth-file", string(), {
-    description: message`Path to Docker registry authentication file. Needs to contain the base64-encoded credentials <username>:<password></username>`
+    description: message`Path to Docker registry authentication file. Needs to contain the base64-encoded credentials <username>:<password></username>`,
   }),
 })
 
 const deleteImageVersions = object({
   deleteVersions: option("-d", "--delete", {
-    description: message`Delete outdated image versions; otherwise, it's a dry run listing images that would be deleted.`
+    description: message`Delete outdated image versions; otherwise, it's a dry run listing images that would be deleted.`,
   }),
-  keepVersions: option(
-    "-k",
-    "--keep-versions",
-    integer({ min: 2 }),
-    {
-      description: message`Delete outdated image versions, keeping the latest n versions. Note that in general, only semver-tags are considered for deletion; any others are ignored. Needs to be >= 2.`
-    }
-  ).withDefault(5),
+  keepVersions: option("-k", "--keep-versions", integer({ min: 2 }), {
+    description: message`Delete outdated image versions, keeping the latest n versions. Note that in general, only semver-tags are considered for deletion; any others are ignored. Needs to be >= 2.`,
+  }).withDefault(5),
+})
+
+const loggingOptions = object({
+  logFormat: option("-l", "--log-format", choice(["json", "pretty"] as const), {
+    description: message`Log output format`,
+  }).withDefault("pretty"),
 })
 
 const parser = merge(
   registryOptions,
   or(authOptionPrompt, authOptionUserPass, authOptionFile),
   deleteImageVersions,
+  loggingOptions,
 )
 
 const config = run(parser, {
@@ -67,6 +72,8 @@ const config = run(parser, {
   brief: message`Cleanup outdated images from docker registry`,
   help: "both",
 })
+
+configureLogging(config.logFormat)
 
 const getAuthBase64 = async () => {
   switch (config.authMode) {
@@ -93,7 +100,9 @@ const registryConfig = {
 }
 const repositories = await fetchRepositories(registryConfig)
 
-console.log("repos response: ", repositories)
+logger.info(
+  `Fetched and found ${repositories.repositories.length} repositories`,
+)
 
 for (const repository of repositories.repositories) {
   const tags = await fetchTags({
@@ -101,8 +110,8 @@ for (const repository of repositories.repositories) {
     auth: authBase64,
     repository,
   })
-  console.log(
-    `Repository: ${repository}, Tags: ${(tags.tags || []).join(", ")}`,
+  logger.info(
+    `Repository: ${repository}, tags: ${(tags.tags ?? []).join(", ")}`,
   )
 
   if (!config.deleteVersions) {
@@ -116,21 +125,25 @@ for (const repository of repositories.repositories) {
   const nonLatestValid = nonLatest.filter((it: string) => valid(it) !== null)
 
   if (invalid.length > 0) {
-    console.log(`Ignoring ${invalid.length} non-semver tags.`)
+    logger.info(`Ignoring ${invalid.length} non-semver tags in ${repository}`)
   }
 
   const sorted = rsort(nonLatestValid)
   const toDelete = sorted.slice(config.keepVersions)
 
   if (!config.deleteVersions) {
-    console.log(`Would delete ${toDelete.length} tags of ${repository}: ${toDelete.join(", ")}`)
+    logger.info(
+      `Would delete ${toDelete.length} outdated tags in ${repository}: ${toDelete.join(", ")}`,
+    )
     continue
   }
 
-  console.log(`Deleting ${toDelete.length} tags of ${repository}: ${toDelete.join(", ")}`)
+  logger.info(
+    `Deleting ${toDelete.length} outdated tags in ${repository}: ${toDelete.join(", ")}`,
+  )
 
   for (const tag of toDelete) {
-    console.log(`Deleting ${repository}:${tag}`)
+    logger.info(`Deleting ${repository}:${tag}`)
     await deleteByTag({
       url: config.registryUrl,
       auth: authBase64,

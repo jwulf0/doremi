@@ -1,4 +1,7 @@
 import * as z from "zod"
+import { createLogger } from "./logger.js"
+
+const logger = createLogger("docker-registry-client")
 
 function defaultHeaders(auth: string): Headers {
   const headers = new Headers()
@@ -66,6 +69,7 @@ export async function fetchTags(
 ): Promise<TagsListResponse> {
   const { url, auth, repository } = config
   const tagsUrl = `${url}/v2/${repository}/tags/list`
+  logger.debug(`Fetching tags for repository ${repository}: ${tagsUrl}`)
   const response = await defaultFetch(tagsUrl, auth)
   const json = await response.json()
   const parsed = TagsListResponse.parse(json)
@@ -75,14 +79,13 @@ export async function fetchTags(
 async function fetchDigest(config: ImageConfig): Promise<string> {
   const { url, auth, repository, tag } = config
   const digestUrl = `${url}/v2/${repository}/manifests/${tag}`
+  logger.debug(`Fetching digest for ${repository}: ${digestUrl}`)
   const response = await fetch(digestUrl, {
     headers: manifestHeaders(auth),
     method: "HEAD",
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    console.log("Response body:", text)
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
 
@@ -98,7 +101,9 @@ async function deleteByDigest(
 ): Promise<void> {
   const { url, auth, repository, tag, digest } = config
   const deleteUrl = `${url}/v2/${repository}/manifests/${digest}`
-  console.log(`Deleting image ${repository}:${tag} (digest: ${digest})`)
+  logger.debug(
+    `Deleting image manifest ${repository}:${tag} via digest: ${deleteUrl}`,
+  )
   const response = await fetch(deleteUrl, {
     headers: defaultHeaders(auth),
     method: "DELETE",

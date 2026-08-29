@@ -39,3 +39,5 @@ docker run --rm \
  --delete \
  --keep-versions 10
 ```
+
+Use `-l json` for JSON logging.
