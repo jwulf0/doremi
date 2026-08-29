@@ -1,0 +1,32 @@
+{
+  "name": "doremi",
+  "version": "1.0.0",
+  "description": "Utility for cleaning a docker registry. For both automated and interactive CLI usage.",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "@types/semver": "^7.8.0",
+    "prettier": "^3.9.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@inquirer/input": "^5.1.4",
+    "@inquirer/password": "^5.2.0",
+    "@inquirer/prompts": "^8.7.0",
+    "@optique/core": "^1.2.4",
+    "@optique/run": "^1.2.4",
+    "semver": "^7.8.5",
+    "zod": "^4.5.1"
+  }
+}
