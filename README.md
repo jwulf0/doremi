@@ -1,4 +1,4 @@
-# Do Re Mi
+# DoReMi
 
 **Do**cker **Re**gistry Cleaning - (Do Re Mi because of the musical thing)
 
@@ -41,3 +41,7 @@ docker run --rm \
 ```
 
 Use `-l json` for JSON logging.
+
+## Garbage Collection
+
+In order to actually free up space on the machine running the docker registry, you'll probably need to run the registry's garbage collection using the `registry garbage-collect` - for docker registry v3 e.g.: `registry garbage-collect --delete-untagged /etc/docker/registry/config.yml`. Please see registry documentation for details as this is out of scope for DoReMi.
